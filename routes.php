@@ -3,6 +3,7 @@
   Usmerjevalnik (router) skrbi za obravnavo HTTP zahtev. Glede na zahtevo, 
   pokliče ustrezno akcijo v zahtevanem controllerju.
 */
+    define('BASE_URL', '/sample_v1_2/');
 
 // Funkcija, ki kliče kontrolerje in hkrati vključuje njihovo kodo in kodo modela
 function call($controller, $action)
