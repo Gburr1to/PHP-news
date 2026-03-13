@@ -18,7 +18,7 @@ class Article
     public $date;
     public $user;
 
-    // Konstruktor
+    // Konstruktor - Ga moram poklicati v create.php
     public function __construct($id, $title, $abstract, $text, $date, $user_id)
     {
         $this->id = $id;
@@ -56,8 +56,71 @@ class Article
         return null;
     }
 
-    
-   
+    //funkcija prejme id userja, najde vse article z user_id = id, vrne vse article.
+     public static function listByUser($user_id)
+    {
+        $db = Db::getInstance(); // pridobimo instanco baze
+        $user_id = mysqli_real_escape_string($db, $user_id);
+        $query = "SELECT * FROM articles WHERE user_id = '$user_id';"; // pripravimo query
+        $res = $db->query($query); // poženemo query
+        $articles = array();
+        while ($article = $res->fetch_object()) {
+            // Za vsak rezultat iz baze ustvarimo objekt (kličemo konstuktor) in ga dodamo v array $articles
+            array_push($articles, new Article($article->id, $article->title, $article->abstract, $article->text, $article->date, $article->user_id));
+        }
+        return $articles;
+    }
 
+    public static function create($title, $abstract, $text){
+        $db = Db::getInstance();
+        $title = mysqli_real_escape_string($db, $title);
+        $abstract = mysqli_real_escape_string($db, $abstract);
+        $text = mysqli_real_escape_string($db, $text);
+        $user_id = $_SESSION["USER_ID"];
+        $query = "INSERT INTO articles (title, abstract, text, user_id) VALUES ('$title', '$abstract', '$text', '$user_id');";
+        if($db->query($query)){
+            return true;
+        }
+        else{
+            return false;
+        }
+    }
+
+    // Metoda, ki preveri razpoložljivost imena
+    public static function is_not_available($title){
+        $db = Db::getInstance();
+        $title = mysqli_real_escape_string($db, $title);
+        $query = "SELECT * FROM articles WHERE title='$title'";
+        $res = $db->query($query);
+        return mysqli_num_rows($res) > 0;
+    }
+
+    public function update($title, $abstract, $text){
+        $db = Db::getInstance();
+        $title = mysqli_real_escape_string($db, $title);
+        $abstract = mysqli_real_escape_string($db, $abstract);
+        $text = mysqli_real_escape_string($db, $text);
+        $id = $this->id;
+        $query = "UPDATE articles SET title='$title', abstract='$abstract', text='$text', date=NOW() WHERE id=$id LIMIT 1;";
+        if($db->query($query)){
+            return true;
+        }
+        else{
+            return false;
+        }
+    }
+
+    public static function delete($id){
+        $db = Db::getInstance();
+        $id = mysqli_real_escape_string($db, $id);
+        $query = "DELETE FROM articles WHERE id=$id LIMIT 1;";
+        if($db->query($query)){
+            return true;
+        }
+        else{
+            return false;
+        }
+    }
+        
         
 }

@@ -18,6 +18,6 @@
             <input type="password" class="form-control" id="repeat" name="repeat_password" value="<?php echo isset($_POST["repeat_password"]) ? $_POST["repeat_password"]: ""; ?>">
         </div>
         <button type="submit" class="btn btn-primary" name="register">Registriraj</button>
-        <label class="text-danger"><?php echo $error; ?></label>
+        <label class="text-danger"><?php echo isset($error)? $error : ""; ?></label>
     </form>
 </div>

@@ -32,8 +32,8 @@ class users_controller
             header("Location: /users/create?error=2"); 
         }
         //Preveri ali uporabniško ime obstaja
-        else if(User::is_available($_POST["username"])){
-            header("Location: /users/create?error=3"); 
+        else if(User::is_not_available($_POST["username"])){
+            header("Location: /users/create?error=3");
         }
         //Podatki so pravilno izpolnjeni, registriraj uporabnika
         else if(User::create($_POST["username"], $_POST["email"], $_POST["password"])){
@@ -74,7 +74,7 @@ class users_controller
             header("Location: /users/edit?error=1"); 
         }
         //Preveri ali uporabniško ime obstaja
-        else if($user->username != $_POST["username"] && User::is_available($_POST["username"])){
+        else if($user->username != $_POST["username"] && User::is_not_available($_POST["username"])){
             header("Location: /users/edit?error=2"); 
         }
         //Podatki so pravilno izpolnjeni, registriraj uporabnika

@@ -5,12 +5,12 @@
         show: izpiše posamezno novico
         
     TODO:
-        list: izpiše novice prijavljenega uporabnika
-        create: izpiše obrazec za vstavljanje novice
-        store: vstavi novico v bazo
-        edit: izpiše vmesnik za urejanje novice
-        update: posodobi novico v bazi
-        delete: izbriše novico iz baze
+        list: izpiše novice prijavljenega uporabnika //
+        create: izpiše obrazec za vstavljanje novice //
+        store: vstavi novico v bazo //
+        edit: izpiše vmesnik za urejanje novice - index, kjer imaš samo svoje novice //
+        update: posodobi novico v bazi //
+        delete: izbriše novico iz baze //
 */
 
 class articles_controller
@@ -25,34 +25,9 @@ class articles_controller
         require_once('views/articles/index.php');
     }
 
-    public function list()
-    {
-        $articles = Article::filter();
-        require_once('views/articles/index.php');
-    }
-    public function create(){
-        $articles = Article::insert
-        require_once('views/articles/create.php');
-    }
-    public function edit()
-    {
-        $articles = Article::filter();
-        require_once('views/articles/index.php');
-    }
-    public function update()
-    {
-        $articles = Article::filter();
-        require_once('views/articles/index.php');
-    }
-    public function delete()
-    {
-        $articles = Article::filter();
-        require_once('views/articles/index.php');
-    }
-
     public function show()
     {
-        //preverimo, če je uporabnik podal informacijo, o oglasu, ki ga želi pogledati
+        //preverimo, če je uporabnik podal informicijo, o oglasu, ki ga želi pogledati
         if (!isset($_GET['id'])) {
             return call('pages', 'error'); //če ne, kličemo akcijo napaka na kontrolerju stran
             //retun smo nastavil za to, da se izvajanje kode v tej akciji ne nadaljuje
@@ -62,51 +37,127 @@ class articles_controller
         require_once('views/articles/show.php');
     }
 
-    function article_exists($article): bool
-        {
-            global $conn;
-            $article = mysqli_real_escape_string($conn, $article);
-            $query = "SELECT * FROM articles WHERE title='$article'";
-            $res = $conn->query($query);
-            return mysqli_num_rows($res) > 0;
-        }
-
-     //validacija
-    function validate_article($title, $abstract, $text): bool
+    public function list()
     {
-        if(empty($title) || empty($abstract) || empty($text)){
-            return false;
-        }
-        else if(article_exists($title)){
-            return false;
-        }
-        else{
-            return true;
+        // Preverimo, če je uporabnik prijavljen
+        if(isset($_SESSION["USER_ID"])){
+            // Iz seje dobimo ID prijavljenega uporabnika
+            $user_id = $_SESSION["USER_ID"];
+            // S pomočjo statične metode modela dobimo seznam novic za tega uporabnika
+            $articles = Article::listByUser($user_id);
+            // Prikažemo seznam novic
+            require_once('views/articles/indexMine.php');
+        } else {
+            // Če ni prijavljen, ga preusmerimo na prijavo
+            header("Location: /auth/login");
         }
     }
 
-    function insert_article($title, $abstract, $text): bool
-    {
-        global $conn;
-        $title = mysqli_real_escape_string($conn, $title);
-        $abstract = mysqli_real_escape_string($conn, $abstract);
-        $text = mysqli_real_escape_string($conn, $text);
-        if(!validate_article($title, $abstract, $text)) return false;
-
-        $user_id = $_SESSION["USER_ID"];
-
-        $query = "INSERT INTO articles (title, abstract, text, date, user_id) 
-                VALUES ('$title', '$abstract', '$text', NOW(), '$user_id');";
-        if($conn->query($query)){
-        return true;
+    function create(){
+        $error = "";
+        if(isset($_GET["error"])){
+            switch($_GET["error"]){
+                case 1: $error = "Izpolnite vse podatke"; break;
+                case 2: $error = "Ime novice je že zasedeno."; break;
+                default: $error = "Prišlo je do napake med objavo novice.";
+            }
         }
-        else{
-        echo mysqli_error($conn);
-        return false;
-        }
+        require_once('views/articles/create.php');
     }
 
-    
-    // predelam, da preveri, če article s tem imenom obstaja 
-    
+    function store(){
+        if(empty($_POST["article-title"]) || empty($_POST["article-story"]) || empty($_POST["article-abstract"])){
+            header("Location: /articles/create?error=1");
+        }
+        else if(Article::is_not_available($_POST["article-title"])){
+            header("Location: /articles/create?error=2");
+        }
+        else if(Article::create($_POST["article-title"], $_POST["article-abstract"], $_POST["article-story"])){
+            header("Location: /articles/list");
+        }
+        else{
+            header("Location: /articles/create?error=3");
+        }
+        die();
+    }
+
+    function edit(){
+        if(!isset($_SESSION["USER_ID"])){
+            header("Location: /pages/error");
+            die();
+        }
+        if(!isset($_GET["id"])){
+            header("Location: /articles/list");
+            die();
+        }
+        $article = Article::find($_GET["id"]);
+        // Preverimo, če je uporabnik lastnik novice
+        if($article->user->id != $_SESSION["USER_ID"]){
+            header("Location: /pages/error");
+            die();
+        }
+
+        $error = "";
+        if(isset($_GET["error"])){
+            switch($_GET["error"]){
+                case 1: $error = "Izpolnite vse podatke"; break;
+                case 2: $error = "Ime novice je že zasedeno."; break;
+                default: $error = "Prišlo je do napake med urejanjem novice.";
+            }
+        }
+        require_once('views/articles/edit.php');
+    }
+
+    function update(){
+        if(!isset($_SESSION["USER_ID"])){
+            header("Location: /pages/error");
+            die();
+        }
+
+        if(empty($_POST["id"]) || empty($_POST["article-title"]) || empty($_POST["article-story"]) || empty($_POST["article-abstract"])){
+            header("Location: /articles/edit?id=" . $_POST["id"] . "&error=1");
+        }
+        else{
+            $article = Article::find($_POST["id"]);
+            // Preverimo, če je uporabnik lastnik novice
+            if($article->user->id != $_SESSION["USER_ID"]){
+                header("Location: /pages/error");
+                die();
+            }
+
+            if($article->update($_POST["article-title"], $_POST["article-abstract"], $_POST["article-story"])){
+                header("Location: /articles/list");
+            }
+            else{
+                header("Location: /articles/edit?id=" . $_POST["id"] . "&error=3");
+            }
+        }
+        die();
+    }
+
+    function delete(){
+        if(!isset($_SESSION["USER_ID"])){
+            header("Location: /pages/error");
+            die();
+        }
+        if(!isset($_GET["id"])){
+            header("Location: /articles/list");
+            die();
+        }
+
+        $article = Article::find($_GET["id"]);
+        // Preverimo, če je uporabnik lastnik novice
+        if($article->user->id != $_SESSION["USER_ID"]){
+            header("Location: /pages/error");
+            die();
+        }
+
+        if(Article::delete($_GET["id"])){
+            header("Location: /articles/list");
+        } else {
+            header("Location: /pages/error");
+        }
+        die();
+    }
+
 }

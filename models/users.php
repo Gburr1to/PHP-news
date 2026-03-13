@@ -22,6 +22,9 @@ class User
         $this->password = $password;
     }
 
+    public function getID(){
+        return $this->id;
+    }
     // Metoda, ki vrne uporabnika z določenim ID-jem iz baze
     public static function find($id)
     {
@@ -64,7 +67,7 @@ class User
     }
 
     // Metoda, ki preveri razpoložljivost uporabniškega imena
-    public static function is_available($username){
+    public static function is_not_available($username){
         $db = Db::getInstance();
         $username = mysqli_real_escape_string($db, $username);
         $query = "SELECT * FROM users WHERE username='$username'";
