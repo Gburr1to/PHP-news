@@ -26,4 +26,7 @@ if (isset($_GET['controller']) && isset($_GET['action'])) {
 }
 
 // Vključimo layout, torej splošni izgled strani, layout pa vključuje router (routes.php)
+// Uporabimo output buffering, da omogočimo header() klic pred izpisom HTML-a
+ob_start();
 require_once('views/layout.php');
+ob_end_flush();

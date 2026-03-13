@@ -10,8 +10,11 @@ class Db
   public static function getInstance()
   {
     if (!isset(self::$instance)) {
-
-      self::$instance = mysqli_connect("localhost", "admin", "david", "news");
+      $host = getenv('DB_HOST') ?: 'localhost';
+      $user = getenv('DB_USER') ?: 'admin';
+      $pass = getenv('DB_PASS');
+      $db   = getenv('DB_NAME') ?: 'news';
+      self::$instance = mysqli_connect($host, $user, $pass, $db);
       self::$instance->set_charset("UTF8");
     }
     return self::$instance;

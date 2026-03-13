@@ -25,6 +25,31 @@ class articles_controller
         require_once('views/articles/index.php');
     }
 
+    public function list()
+    {
+        $articles = Article::filter();
+        require_once('views/articles/index.php');
+    }
+    public function create(){
+        $articles = Article::insert
+        require_once('views/articles/create.php');
+    }
+    public function edit()
+    {
+        $articles = Article::filter();
+        require_once('views/articles/index.php');
+    }
+    public function update()
+    {
+        $articles = Article::filter();
+        require_once('views/articles/index.php');
+    }
+    public function delete()
+    {
+        $articles = Article::filter();
+        require_once('views/articles/index.php');
+    }
+
     public function show()
     {
         //preverimo, če je uporabnik podal informacijo, o oglasu, ki ga želi pogledati
@@ -37,27 +62,37 @@ class articles_controller
         require_once('views/articles/show.php');
     }
 
-    public function create(){
-        require_once('views/articles/create.php');
-    }
-    // predelam, da preveri, če article s tem imenom obstaja 
     function article_exists($article): bool
+        {
+            global $conn;
+            $article = mysqli_real_escape_string($conn, $article);
+            $query = "SELECT * FROM articles WHERE title='$article'";
+            $res = $conn->query($query);
+            return mysqli_num_rows($res) > 0;
+        }
+
+     //validacija
+    function validate_article($title, $abstract, $text): bool
     {
-        global $conn;
-        $article = mysqli_real_escape_string($conn, $article);
-        $query = "SELECT * FROM articles WHERE title='$article'";
-        $res = $conn->query($query);
-        return mysqli_num_rows($res) > 0;
+        if(empty($title) || empty($abstract) || empty($text)){
+            return false;
+        }
+        else if(article_exists($title)){
+            return false;
+        }
+        else{
+            return true;
+        }
     }
 
-    //predelam, da doda article v sql 
-    function submit_article($title, $abstract, $text): bool
+    function insert_article($title, $abstract, $text): bool
     {
         global $conn;
         $title = mysqli_real_escape_string($conn, $title);
         $abstract = mysqli_real_escape_string($conn, $abstract);
         $text = mysqli_real_escape_string($conn, $text);
-        //$date = date("Y-m-d H:i:s");
+        if(!validate_article($title, $abstract, $text)) return false;
+
         $user_id = $_SESSION["USER_ID"];
 
         $query = "INSERT INTO articles (title, abstract, text, date, user_id) 
@@ -70,17 +105,8 @@ class articles_controller
         return false;
         }
     }
-    //validacija
-    function validate_article($title, $abstract, $text): string
-    {
-        if(empty($title) || empty($abstract) || empty($text)){
-            return "Izpolnite vse podatke.";
-        }
-        else if(article_exists($title)){
-            return "Ime novice je že zasedeno.";
-        }
-        else{
-            return "";
-        }
-    }
+
+    
+    // predelam, da preveri, če article s tem imenom obstaja 
+    
 }
